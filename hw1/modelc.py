@@ -5,7 +5,26 @@ import math
 from collections import defaultdict
 from corpus import BiText
 
+try:
+    import numpypy
+except ImportError:
+    pass
+import numpy
+
+def diagonal_matrix(flen, elen, scale):
+    diag = numpy.array([[math.exp(-scale * abs(j/float(elen)-i/float(flen)))
+                      for j in xrange(elen)]
+                        for i in xrange(flen)])
+    return diag / diag.sum(axis=0) # normalize columns
+
+def alignment_matrix(diag, p_null):
+    null_row = p_null * numpy.ones((1, diag.shape[1]))
+    diag *= (1 - p_null)
+    return numpy.concatenate((null_row, diag))
+
 n_iter = 5
+scale = 4
+p_null = 0.08
 
 def main():
     logging.basicConfig(level=logging.INFO, format='%(message)s')
@@ -33,11 +52,12 @@ def main():
         c_f_e = dict(((f, e), 0) for (f, e) in t_f_e.iterkeys())
         # E
         for f_sentence, e_sentence in corpus:
-            for e in e_sentence:
-                t_e = sum(t_f_e[f, e] for f in f_sentence)
+            a_prob = alignment_matrix(diagonal_matrix(len(f_sentence)-1, len(e_sentence), scale), p_null)
+            for j, e in enumerate(e_sentence):
+                t_e = sum(t_f_e[f, e] * a_prob[i, j] for i, f in enumerate(f_sentence))
                 log_likelihood += math.log(t_e)
-                for f in f_sentence:
-                    c_f_e[f, e] += t_f_e[f, e] / t_e
+                for i, f in enumerate(f_sentence):
+                    c_f_e[f, e] += t_f_e[f, e] * a_prob[i, j] / t_e
         ppl = math.exp(-log_likelihood/n_target)
         logging.info('Previous iteration LL=%.0f ppl=%.3f', log_likelihood, ppl)
         # M
