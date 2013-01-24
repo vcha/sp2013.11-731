@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import optparse
 import sys
+from itertools import izip
 
 optparser = optparse.OptionParser()
 optparser.add_option("-b", "--bitext", dest="bitext", default="data/dev-test-train.de-en", help="Parallel corpus (default data/dev-test-train.de-en)")
@@ -9,7 +10,7 @@ optparser.add_option("-n", "--num_display", dest="n", default=sys.maxint, type="
 (opts, args) = optparser.parse_args()
 
 (size_a, size_s, size_a_and_s, size_a_and_p) = (0.0,0.0,0.0,0.0)
-for (i, (f_e, g, a)) in enumerate(zip(open(opts.bitext), open(opts.alignment), sys.stdin)):
+for (i, (f_e, g, a)) in enumerate(izip(open(opts.bitext), open(opts.alignment), sys.stdin)):
   (f, e) = f_e.split(' ||| ')
   fwords = f.strip().split()
   ewords = e.strip().split()
