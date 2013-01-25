@@ -2,14 +2,10 @@
 import sys
 import logging
 import math
-from collections import defaultdict
-from corpus import BiText
-
-try:
-    import numpypy
-except ImportError:
-    pass
 import numpy
+from collections import defaultdict
+from scipy.special import digamma
+from corpus import BiText
 
 def diagonal_matrix(flen, elen, scale):
     diag = numpy.array([[math.exp(-scale * abs(j/float(elen)-i/float(flen)))
@@ -25,6 +21,7 @@ def alignment_matrix(diag, p_null):
 n_iter = 5
 scale = 4
 p_null = 0.08
+vb_alpha = 0.01
 
 def main():
     logging.basicConfig(level=logging.INFO, format='%(message)s')
@@ -49,7 +46,7 @@ def main():
     for it in range(n_iter):
         logging.info('EM iteration %s', it+1)
         log_likelihood = 0
-        c_f_e = dict(((f, e), 0) for (f, e) in t_f_e.iterkeys())
+        c_f_e = dict(((f, e), vb_alpha) for (f, e) in t_f_e.iterkeys())
         # E
         for f_sentence, e_sentence in corpus:
             a_prob = alignment_matrix(diagonal_matrix(len(f_sentence)-1, len(e_sentence), scale), p_null)
@@ -64,7 +61,8 @@ def main():
         for f in range(len(corpus.f_voc)):
             c_f = sum(c_f_e[f, e] for e in possible_alignments[f])
             for e in possible_alignments[f]:
-                t_f_e[f, e] = c_f_e[f, e]/c_f
+                #t_f_e[f, e] = c_f_e[f, e]/c_f
+                t_f_e[f, e] = math.exp(digamma(c_f_e[f, e]))/math.exp(digamma(c_f))
 
     logging.info('Decode')
     for f_sentence, e_sentence in corpus:
