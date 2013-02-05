@@ -68,7 +68,8 @@ def main():
 
     logging.info('Decode')
     for f_sentence, e_sentence in corpus:
-        als = ((max((t_f_e[f, e], j) for j, f in enumerate(f_sentence))[1], i)
+        a_prob = alignment_matrix(len(f_sentence)-1, len(e_sentence), scale, p_null)
+        als = ((max((t_f_e[f, e] * a_prob[i, j], j) for j, f in enumerate(f_sentence))[1], i)
                 for i, e in enumerate(e_sentence)) # max p(a_i|i)
         als = ('{0}-{1}'.format(j-1, i) for j, i in als if j > 0) # f-e
         print(' '.join(als))
