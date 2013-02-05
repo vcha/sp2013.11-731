@@ -7,21 +7,21 @@ from collections import defaultdict
 from scipy.special import digamma
 from corpus import BiText
 
-def diagonal_matrix(flen, elen, scale):
-    diag = numpy.array([[math.exp(-scale * abs(j/float(elen)-i/float(flen)))
-                      for j in xrange(elen)]
-                        for i in xrange(flen)])
-    return diag / diag.sum(axis=0) # normalize columns
-
-def alignment_matrix(diag, p_null):
-    null_row = p_null * numpy.ones((1, diag.shape[1]))
+def alignment_matrix(flen, elen, scale, p_null):
+    #p_null = 1./(1+flen)
+    diag = numpy.array([[math.exp(-scale * abs(i/float(elen) - j/float(flen)))
+                      for j in xrange(flen)]
+                        for i in xrange(elen)])
+    diag /= diag.sum(axis=1)[:,numpy.newaxis] # normalize lines
+    null_col = p_null * numpy.ones((elen, 1))
     diag *= (1 - p_null)
-    return numpy.concatenate((null_row, diag))
+    return numpy.hstack((null_col, diag))
 
 n_iter = 5
 scale = 4
 p_null = 0.08
-vb_alpha = 0.01
+vb_estimate = False
+vb_alpha = (0.01 if vb_estimate else 0)
 
 def main():
     logging.basicConfig(level=logging.INFO, format='%(message)s')
@@ -49,11 +49,11 @@ def main():
         c_f_e = dict(((f, e), vb_alpha) for (f, e) in t_f_e.iterkeys())
         # E
         for f_sentence, e_sentence in corpus:
-            a_prob = alignment_matrix(diagonal_matrix(len(f_sentence)-1, len(e_sentence), scale), p_null)
-            for j, e in enumerate(e_sentence):
-                t_e = sum(t_f_e[f, e] * a_prob[i, j] for i, f in enumerate(f_sentence))
+            a_prob = alignment_matrix(len(f_sentence)-1, len(e_sentence), scale, p_null)
+            for i, e in enumerate(e_sentence):
+                t_e = sum(t_f_e[f, e] * a_prob[i, j] for j, f in enumerate(f_sentence))
                 log_likelihood += math.log(t_e)
-                for i, f in enumerate(f_sentence):
+                for j, f in enumerate(f_sentence):
                     c_f_e[f, e] += t_f_e[f, e] * a_prob[i, j] / t_e
         ppl = math.exp(-log_likelihood/n_target)
         logging.info('Previous iteration LL=%.0f ppl=%.3f', log_likelihood, ppl)
@@ -61,14 +61,16 @@ def main():
         for f in range(len(corpus.f_voc)):
             c_f = sum(c_f_e[f, e] for e in possible_alignments[f])
             for e in possible_alignments[f]:
-                #t_f_e[f, e] = c_f_e[f, e]/c_f
-                t_f_e[f, e] = math.exp(digamma(c_f_e[f, e]))/math.exp(digamma(c_f))
+                if vb_estimate:
+                    t_f_e[f, e] = math.exp(digamma(c_f_e[f, e]) - digamma(c_f))
+                else:
+                    t_f_e[f, e] = c_f_e[f, e] / c_f
 
     logging.info('Decode')
     for f_sentence, e_sentence in corpus:
-        als = ((max((t_f_e[f, e], i) for i, f in enumerate(f_sentence))[1], j)
-                for j, e in enumerate(e_sentence))
-        als = ('{0}-{1}'.format(i-1, j) for i, j in als if i > 0)
+        als = ((max((t_f_e[f, e], j) for j, f in enumerate(f_sentence))[1], i)
+                for i, e in enumerate(e_sentence)) # max p(a_i|i)
+        als = ('{0}-{1}'.format(j-1, i) for j, i in als if j > 0) # f-e
         print(' '.join(als))
 
 if __name__ == '__main__':
