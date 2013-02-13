@@ -7,7 +7,7 @@ from scipy.special import digamma
 from corpus import BiText
 
 n_iter = 5
-vb_estimate = False
+vb_estimate = True
 vb_alpha = (0.01 if vb_estimate else 0)
 
 def main():

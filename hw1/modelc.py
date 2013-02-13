@@ -18,10 +18,10 @@ def alignment_matrix(flen, elen, scale, p_null):
     return numpy.hstack((null_col, diag))
 
 n_iter = 5
-scale = 4
-p_null = 0.08
-vb_estimate = False
-vb_alpha = (0.01 if vb_estimate else 0)
+scale = 6.37607751
+p_null = 0.18177851
+vb_estimate = True
+vb_alpha = (0.0278244 if vb_estimate else 0)
 
 def main():
     logging.basicConfig(level=logging.INFO, format='%(message)s')
