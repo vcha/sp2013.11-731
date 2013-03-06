@@ -30,7 +30,16 @@ We use a 5-gram language model trained on the Gigaword corpus to evaluate fluenc
 
 ## Features that did not help
 
-- computing word match by substituting words with their Brown clusters
+Computing word match by substituting words with their Brown clusters.
+
+## Brief experiment summary
+
+<table>
+<tr><th>method</th><th>train score</th><th>test score</th></tr>
+<tr><td>baseline</td><td>0.515530</td><td>0.508392</td></tr>
+<tr><td>min\_match{1,2}</td><td>0.532013</td><td>0.524015</td></tr>
+<tr><td>all features</td><td>0.552274</td><td>0.548216</td></tr>
+</table>
 
 ## Resources used
 
@@ -39,3 +48,9 @@ We use a 5-gram language model trained on the Gigaword corpus to evaluate fluenc
 - [English Gigaword](http://www.ldc.upenn.edu/Catalog/catalogEntry.jsp?catalogId=LDC2003T05)
 - POS corpus from [CONLL 2003](http://www.cnts.ua.ac.be/conll2003/ner/)
 - word embeddings from [senna](http://ml.nec-labs.com/senna/)
+
+## Using the code
+
+- Install nltk, scikit-learn, [kenlm](https://github.com/vchahun/kenlm#python-module), munkres
+- Train a model with: `python train.py` which will produce `model.pickle`
+- Compute scores using: `cat data/test.hyp1-hyp2-ref | python azul.py`
