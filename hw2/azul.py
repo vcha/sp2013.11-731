@@ -1,8 +1,7 @@
 #!/usr/bin/env python
-import sys
 import re
-from itertools import tee, izip
-from collections import Counter
+import features
+import pickle
 
 entity_re = re.compile("&(#?)(\d{1,5}|\w{1,8});")
 # Note: ignores non-ASCII words on purpose
@@ -16,27 +15,27 @@ def tokenize(sentence):
 def normalize(word):
     return word.lower().replace(',', '.')
 
-def sentences():
-    for pair in sys.stdin:
-        yield [map(normalize, tokenize(sentence)) for sentence in pair.split(' ||| ')]
-
-def bigrams(sent):
-    x, y = tee(['^']+sent+['$'])
-    next(y)
-    for t in izip(x, y):
-        yield t
-
-def min_match(x, y):
-    x, y = list(x), list(y)
-    return len(Counter(x) & Counter(y))/((len(x)+len(y))/2.)
-
-def score(ref, hyp):
-    return min_match(ref, hyp) + min_match(bigrams(ref), bigrams(hyp))
+def sentences(fn='/dev/stdin'):
+    with open(fn) as f:
+        for pair in f:
+            yield [map(normalize, tokenize(sentence)) for sentence in pair.split(' ||| ')]
 
 def main():
+    with open('model.pickle') as f:
+        vectorizer, model = pickle.load(f)
+
     for hyp1, hyp2, ref in sentences():
-        delta = score(ref, hyp1) - score(ref, hyp2)
-        print (-1 if delta > 0 else 1 if delta < 0 else 0)
+        f1 = features.extract(ref, hyp1)
+        f2 = features.extract(ref, hyp2)
+        f = features.diff(f2, f1)
+        if f['min_match'] == f['min_match2'] == f['min_match3'] == 0:
+            print 0
+            continue
+        score = model.predict(vectorizer.transform((f,))) # w . (f_2 - f_1)
+        if score > 0:
+            print 1
+        else:
+            print -1
 
 if __name__ == '__main__':
     main()

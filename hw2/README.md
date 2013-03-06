@@ -1,19 +1,41 @@
-There are three Python programs here (`-h` for usage):
+# The AZUL metric
 
- - `./evaluate` evaluates pairs of MT output hypotheses relative to a reference translation using counts of matched words
- - `./check` checks that the output file is correctly formatted
- - `./grade` computes the accuracy
+## Methodology
 
-The commands are designed to work in a pipeline. For instance, this is a valid invocation:
+We fitted a linear regression model to the scores given in the training data with a large set of features to represent a (reference, hypothesis) pair. We use a subset of the features to determine whether two translations should be marked as equivalent (another classifier could be trained for this purpose) and otherwise, we use the regression model to decide which translation better matches the reference.
 
-    ./evaluate | ./check | ./grade
+## Used features
 
+Before doing feature extraction, we tokenize and lowercase the input and keep only the tokens made exclusively of ASCII letters.
 
-The `data/` directory contains a training set and a test set
+For each feature, we add another feature equal to the log of its value, to account for simple non-linear effects.
 
- - `data/train.hyp1-hyp2-ref` is a file containing tuples of two translation hypotheses and a human (gold standard) translation.
+### Simple match
 
- - `data/train.gold` contains gold standard human judgements indicating whether the first hypothesis (hyp1) or the second hypothesis (hyp2) is better or equally good/bad.
+We compute various features based on potential word unigram, bigram and trigram matches.
 
- - `data/test.hyp1-hyp2-ref` is a blind test set containing tuples of two translation hypotheses and a human (gold standard) translation. You will be graded on how well your predictions correlate with human judgements.
+We also add various length features and count the number of stopwords.
 
+### POS match
+
+We part-of-speech tag the sentences and compute match features on the POS sequence.
+
+### Alignment
+
+We use word embeddings to compute similarities between words and find the maximal matching according to these scores. Then we find chunks in the alignment and compute features based on the alignments and the chunks.
+
+### Target language modeling
+
+We use a 5-gram language model trained on the Gigaword corpus to evaluate fluency. We also train and use a 10-gram POS language model.
+
+## Features that did not help
+
+- computing word match by substituting words with their Brown clusters
+
+## Resources used
+
+- nltk maxent POS tagger
+- stopword list from nltk
+- [English Gigaword](http://www.ldc.upenn.edu/Catalog/catalogEntry.jsp?catalogId=LDC2003T05)
+- POS corpus from [CONLL 2003](http://www.cnts.ua.ac.be/conll2003/ner/)
+- word embeddings from [senna](http://ml.nec-labs.com/senna/)
