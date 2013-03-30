@@ -3,5 +3,5 @@ name:
    first: Victor
    last: Chahuneau
 email: vchahune@cs.cmu.edu
-leaderboard: "--------"
+leaderboard: --------
 languages: [eng, fra, rus]
