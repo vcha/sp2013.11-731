@@ -11,15 +11,16 @@ from collections import namedtuple
 #     phrase(english='what has been', logprob=-0.301030009985)]
 # k is a pruning parameter: only the top k translations are kept for each f.
 phrase = namedtuple("phrase", "english, logprob")
-def TM(filename, k):
+def TM(filename, k=None):
     sys.stderr.write("Reading translation model from %s...\n" % (filename,))
     tm = {}
     for line in open(filename).readlines():
         (f, e, logprob) = line.strip().split(" ||| ")
-        tm.setdefault(tuple(f.split()), []).append(phrase(e, float(logprob)))
-    for f in tm: # prune all but top k translations
-        tm[f].sort(key=lambda x: -x.logprob)
-        del tm[f][k:] 
+        tm.setdefault(tuple(f.split()), []).append(phrase(tuple(e.split()), float(logprob)))
+    if k is not None:
+        for f in tm: # prune all but top k translations
+            tm[f].sort(key=lambda x: -x.logprob)
+            del tm[f][k:] 
     return tm
 
 # # A language model scores sequences of English words, and must account
