@@ -4,6 +4,7 @@ import random
 import logging
 import sys
 import argparse
+import multiprocessing as mp
 
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 
@@ -139,7 +140,7 @@ def translate(input_sentence, n_iter, reordering_limit):
             score[0] += tm_delta
             score[1] += lm_delta
 
-    # XXX initial decoding problem
+    # Make initial decoding easy
     for w in input_sentence:
         if not (w,) in tm:
             tm[(w,)] = [models.phrase((w,), -20)]
@@ -195,16 +196,25 @@ def translate(input_sentence, n_iter, reordering_limit):
 
     return ' '.join(' '.join(phrase.english) for phrase in target)
 
+def translate_star(args):
+    sys.stderr.write('Got sentence!\n')
+    return translate(*args)
+
 def main():
     parser = argparse.ArgumentParser(description='Stochastic decoder')
     parser.add_argument('-i', '--n-iter', type=int, required=True)
-    parser.add_argument('-r', '--reordering', type=int, default=5)
+    parser.add_argument('-r', '--reordering', type=int, default=1000)
+    parser.add_argument('-p', '--processes', type=int, default=1)
     args = parser.parse_args()
 
-    load_models()
+    logging.info('Starting %d decoders', args.processes)
+    pool = mp.Pool(args.processes, load_models)
 
-    for sentence in sys.stdin:
-        print translate(sentence.split(), args.n_iter, args.reordering)
+    tasks = ((sentence.split(), args.n_iter, args.reordering)
+            for sentence in sys.stdin)
+
+    for translation in pool.imap(translate_star, tasks):
+        print translation
         sys.stdout.flush()
 
 if __name__ == '__main__':

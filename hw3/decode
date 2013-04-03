@@ -40,7 +40,7 @@ for f in input_sents:
                     for phrase in tm[f[i:j]]:
                         logprob = h.logprob + phrase.logprob
                         lm_state = h.lm_state
-                        for word in phrase.english.split():
+                        for word in phrase.english:
                             (lm_state, word_logprob) = lm.score(lm_state, word)
                             logprob += word_logprob
                         logprob += lm.end(lm_state) if j == len(f) else 0.0
@@ -52,7 +52,7 @@ for f in input_sents:
     # on the last stack
     winner = max(stacks[-1].itervalues(), key=lambda h: h.logprob)
     def extract_english_recursive(h):
-        return '' if h.predecessor is None else '%s%s ' % (extract_english_recursive(h.predecessor), h.phrase.english)
+        return '' if h.predecessor is None else '%s%s ' % (extract_english_recursive(h.predecessor), ' '.join(h.phrase.english))
     print extract_english_recursive(winner)
 
     if opts.verbose:

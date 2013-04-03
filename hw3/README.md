@@ -1,18 +1,5 @@
-There are three Python programs here (`-h` for usage):
+I implemented a decoder loosely based on [Monte Carlo inference and maximization for phrase-based translation](http://www.aclweb.org/anthology/W/W09/W09-1114.pdf) (Arun & al. 2009). The local moves considered are similar: replace a phrase translation, swap two arbitrary phrases (no reordering limit gives a better model score but also strange output), merge two adjacent phrases, split a phrase. Then stochastic search is done considering these possible changes in turn and making random decisions proportional to the likelihood of the change. Simulated annealing is used to allow big changes in the beginning and a more greedy search at the end.
 
- - `./decode` a simple non-reordering (monotone) phrase-based decoder
- - `./grade` computes the model score of your output
+The search was run for 100,000 iterations.
 
-The commands are designed to work in a pipeline. For instance, this is a valid invocation:
-
-    ./decode | ./grade
-
-
-The `data/` directory contains the input set to be decoded and the models
-
- - `data/input` is the input text
-
- - `data/lm` is the ARPA-format 3-gram language model
-
- - `data/tm` is the phrase translation model
-
+For competition reasons, we also combine the results of several runs.

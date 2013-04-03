@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # Simple translation model and language model data structures
-import sys
+import logging
 from collections import namedtuple
 
 # A translation model is a dictionary where keys are tuples of French words
@@ -12,7 +12,7 @@ from collections import namedtuple
 # k is a pruning parameter: only the top k translations are kept for each f.
 phrase = namedtuple("phrase", "english, logprob")
 def TM(filename, k=None):
-    sys.stderr.write("Reading translation model from %s...\n" % (filename,))
+    logging.info("Reading translation model from %s..." , filename)
     tm = {}
     for line in open(filename).readlines():
         (f, e, logprob) = line.strip().split(" ||| ")
@@ -36,7 +36,7 @@ def TM(filename, k=None):
 ngram_stats = namedtuple("ngram_stats", "logprob, backoff")
 class LM:
     def __init__(self, filename):
-        sys.stderr.write("Reading language model from %s...\n" % (filename,))
+        logging.info("Reading language model from %s...", filename)
         self.table = {}
         for line in open(filename):
             entry = line.strip().split("\t")
