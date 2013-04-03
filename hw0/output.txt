@@ -3,6 +3,6 @@ name:
    first: Victor
    last: Chahuneau
 email: vchahune@cs.cmu.edu
-leaderboard: o_o
+leaderboard: 8P
 
 languages: [eng, fra, rus]
